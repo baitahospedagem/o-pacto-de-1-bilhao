@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Remover Fundo</title>
+  <style>
+    body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
+    #log { white-space: pre-wrap; font-size: 14px; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "onnxruntime-web": "/node_modules/onnxruntime-web/dist/ort.all.bundle.min.mjs"
+    }
+  }
+  </script>
+</head>
+<body>
+  <h1>Removendo Fundo dos Livros Reais...</h1>
+  <div id="log">Iniciando...</div>
+  <script type="module">
+    import { removeBackground } from '/node_modules/@imgly/background-removal/dist/index.mjs';
+    const log = (msg) => { console.log(msg); document.getElementById('log').textContent += '\n' + msg; };
+
+    async function run() {
+      try {
+        log('1. Carregando imagem local livros_reais_foto.jpg...');
+        const imageRes = await fetch('/livros_reais_foto.jpg');
+        const imageBlob = await imageRes.blob();
+        log(`Imagem carregada com sucesso (${Math.round(imageBlob.size / 1024)} KB)!`);
+
+        log('2. Executando inteligência neural de remoção de fundo...');
+        const blob = await removeBackground(imageBlob, {
+          progress: (key, current, total) => {
+            if (total > 0) {
+              log(`[${key}] ${Math.round(current / total * 100)}%`);
+            } else {
+              log(`[${key}] ${current}`);
+            }
+          }
+        });
+        log('3. Fundo removido! Convertendo para base64...');
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64data = reader.result;
+          log('4. Salvando livros_recortados.png...');
+          await fetch('/save-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: 'livros_recortados.png', image: base64data })
+          });
+          log('SUCESSO TOTAL! livros_recortados.png salvo com transparência alfa perfeita.');
+        };
+        reader.readAsDataURL(blob);
+      } catch (err) {
+        log('ERRO: ' + (err.stack || err.message));
+      }
+    }
+    run();
+  </script>
+</body>
+</html>

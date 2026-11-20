@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Processador e Limpeza dos Livros Físicos</title>
+  <style>
+    body { font-family: sans-serif; background: #0c1822; color: #fff; padding: 20px; text-align: center; }
+    #log { white-space: pre-wrap; font-family: monospace; background: #060e14; padding: 15px; border-radius: 8px; max-height: 250px; overflow: auto; margin: 15px auto; text-align: left; max-width: 900px; font-size: 13px; color: #9ed7aa; }
+    .gallery { display: flex; justify-content: center; gap: 30px; margin-top: 30px; flex-wrap: wrap; }
+    .card { background: #13222e; padding: 20px; border-radius: 10px; max-width: 480px; }
+    .card img { max-width: 100%; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); background: #eee; background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0px; }
+  </style>
+</head>
+<body>
+  <h1>Remoção de Fundo e Reflexos dos Livros Físicos</h1>
+  <div id="log">Iniciando...</div>
+  <div class="gallery" id="gallery"></div>
+
+  <script type="module">
+    const logEl = document.getElementById('log');
+    function log(msg) {
+      console.log(msg);
+      logEl.textContent += '\n' + msg;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // Função para desenhar imagem mapeada por perspectiva (4 pontos)
+    function drawQuad(ctx, img, p1, p2, p3, p4) {
+      // Divide em 2 triângulos: (p1, p2, p4) e (p2, p3, p4)
+      drawTriangle(ctx, img, 0, 0, img.width, 0, 0, img.height, p1.x, p1.y, p2.x, p2.y, p4.x, p4.y);
+      drawTriangle(ctx, img, img.width, 0, img.width, img.height, 0, img.height, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y);
+    }
+
+    function drawTriangle(ctx, im, x0, y0, x1, y1, x2, y2, sx0, sy0, sx1, sy1, sx2, sy2) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(sx0, sy0);
+      ctx.lineTo(sx1, sy1);
+      ctx.lineTo(sx2, sy2);
+      ctx.closePath();
+      ctx.clip();
+
+      const denom = (x0 - x2) * (y1 - y2) - (x1 - x2) * (y0 - y2);
+      if (denom === 0) { ctx.restore(); return; }
+
+      const a = ((sx0 - sx2) * (y1 - y2) - (sx1 - sx2) * (y0 - y2)) / denom;
+      const b = ((x0 - x2) * (sx1 - sx2) - (x1 - x2) * (sx0 - sx2)) / denom;
+      const c = sx2 - a * x2 - b * y2;
+
+      const d = ((sy0 - sy2) * (y1 - y2) - (sy1 - sy2) * (y0 - y2)) / denom;
+      const e = ((x0 - x2) * (sy1 - sy2) - (x1 - x2) * (sy0 - sy2)) / denom;
+      const f = sy2 - d * x2 - e * y2;
+
+      ctx.transform(a, d, b, e, c, f);
+      ctx.drawImage(im, 0, 0);
+      ctx.restore();
+    }
+
+    async function run() {
+      try {
+        log('1. Carregando imagem com livros isolados (IA)...');
+        const imgAI = new Image();
+        imgAI.src = '/livros_sem_fundo_base.jpg';
+        await imgAI.decode();
+        log(`Imagem AI carregada: ${imgAI.width}x${imgAI.height}px.`);
+
+        log('2. Carregando capa oficial em alta resolução...');
+        const imgCover = new Image();
+        imgCover.src = '/capa_frontal_oficial.jpg';
+        await imgCover.decode();
+        log(`Capa oficial carregada: ${imgCover.width}x${imgCover.height}px.`);
+
+        // Canvas de composição
+        const W = imgAI.width;
+        const H = imgAI.height;
+        const canvas = document.createElement('canvas');
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        // Desenhar a base dos livros isolados
+        ctx.drawImage(imgAI, 0, 0);
+
+        // 3. Sobrepor a capa oficial cristalina no Livro Superior
+        // Coordenadas dos 4 cantos da capa no livro superior:
+        const topBookP1 = { x: 320, y: 130 }; // topo-esq
+        const topBookP2 = { x: 608, y: 111 }; // topo-dir
+        const topBookP3 = { x: 651, y: 418 }; // base-dir
+        const topBookP4 = { x: 350, y: 440 }; // base-esq
+
+        log('3. Mapeando capa oficial no livro do topo com correção de perspectiva...');
+        drawQuad(ctx, imgCover, topBookP1, topBookP2, topBookP3, topBookP4);
+
+        // 4. Sobrepor a capa oficial cristalina no Livro Inferior (em espiral)
+        // Coordenadas dos 4 cantos da capa no livro inferior:
+        const botBookP1 = { x: 494, y: 502 }; // topo-esq
+        const botBookP2 = { x: 772, y: 720 }; // topo-dir
+        const botBookP3 = { x: 304, y: 950 }; // base-dir
+        const botBookP4 = { x: 94, y: 692 };  // base-esq
+
+        log('4. Mapeando capa oficial no livro inferior com correção de perspectiva...');
+        drawQuad(ctx, imgCover, botBookP1, botBookP2, botBookP3, botBookP4);
+
+        // 5. Tornar o fundo branco transparente (preservando sombras suaves de contato)
+        log('5. Convertendo fundo branco para transparência alfa...');
+        const imgData = ctx.getImageData(0, 0, W, H);
+        const d = imgData.data;
+
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i];
+          const g = d[i+1];
+          const b = d[i+2];
+
+          // Se for branco ou quase branco puro do fundo (r, g, b > 250)
+          if (r > 252 && g > 252 && b > 252) {
+            d[i+3] = 0; // 100% transparente
+          } else if (r > 230 && g > 230 && b > 230) {
+            // Zona de transição suave / sombra muito suave
+            const brightness = (r + g + b) / 3;
+            if (brightness > 248) {
+              d[i+3] = Math.round((255 - brightness) / 7 * 255);
+            }
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+
+        log('6. Salvando imagem final sem fundo e sem reflexos: livros_fisicos_sem_fundo.png...');
+        const finalPngData = canvas.toDataURL('image/png');
+        await fetch('/save-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: 'livros_fisicos_sem_fundo.png', image: finalPngData })
+        });
+        log('SUCESSO! livros_fisicos_sem_fundo.png salvo!');
+
+        // Exibir no preview
+        const gallery = document.getElementById('gallery');
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = '<h3>Livros Físicos Sem Fundo e Sem Reflexos</h3><img src="livros_fisicos_sem_fundo.png" />';
+        gallery.appendChild(card);
+
+      } catch (err) {
+        log('ERRO: ' + (err.stack || err.message));
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>

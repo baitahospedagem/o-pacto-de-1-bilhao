@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de Mockup 3D em Alta Definição</title>
+  <style>
+    body { font-family: sans-serif; background: #0c1822; color: #fff; padding: 20px; text-align: center; }
+    #log { white-space: pre-wrap; font-family: monospace; background: #060e14; padding: 15px; border-radius: 8px; max-height: 250px; overflow: auto; margin: 15px auto; text-align: left; max-width: 900px; font-size: 13px; line-height: 1.5; color: #9ed7aa; }
+    .preview-row { display: flex; justify-content: center; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+    .preview-box { background: #13222e; padding: 15px; border-radius: 8px; }
+    img { max-height: 350px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  </style>
+</head>
+<body>
+  <h1>Gerando Mockup 3D Oficial — O Pacto de 1 Bilhão</h1>
+  <div id="log">Iniciando processamento da capa...</div>
+  <div class="preview-row" id="previews"></div>
+
+  <script type="module">
+    import * as pdfjsLib from '/node_modules/pdfjs-dist/build/pdf.min.mjs';
+    import * as THREE from '/node_modules/three/build/three.module.js';
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
+
+    const logEl = document.getElementById('log');
+    function log(msg) {
+      console.log(msg);
+      logEl.textContent += '\n' + msg;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    async function run() {
+      try {
+        log('1. Carregando PDF da capa oficial...');
+        const loadingTask = pdfjsLib.getDocument({ url: '/livro_capa_completa.pdf' });
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+        
+        // Renderizar em ultra-alta resolução (scale: 3.0 para máxima nitidez)
+        const viewport = page.getViewport({ scale: 3.0 });
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = viewport.width;
+        fullCanvas.height = viewport.height;
+        const fctx = fullCanvas.getContext('2d');
+        
+        log(`2. Renderizando capa aberta em ${fullCanvas.width}x${fullCanvas.height}px...`);
+        await page.render({ canvasContext: fctx, viewport }).promise;
+        log('Capa renderizada com sucesso!');
+
+        // Dimensões com escala 3.0:
+        // Total largura = 1256.64 * 3 = 3769.92 (3770px)
+        // Total altura = 595.44 * 3 = 1786.32 (1786px)
+        // Proporções:
+        // Orelha esquerda: 0 até 602px (~16%)
+        // Quarta capa: 602px até 1844px (1242px de largura)
+        // Lombada: 1844px até 1926px (82px de largura)
+        // Capa frontal: 1926px até 3168px (1242px de largura)
+        // Orelha direita: 3168px até 3770px (602px de largura)
+
+        const W = fullCanvas.width;
+        const H = fullCanvas.height;
+
+        // Medidas precisas em pixels escala 3.0:
+        const flapWidth = Math.round(W * 0.160);
+        const spineWidth = Math.round(W * 0.0215); // ~81px
+        const coverWidth = Math.round((W - (flapWidth * 2) - spineWidth) / 2); // ~1243px
+
+        const backX = flapWidth;
+        const spineX = backX + coverWidth;
+        const frontX = spineX + spineWidth;
+
+        log(`Coordenadas calculadas:
+- Orelha Esquerda: 0 a ${backX}px
+- Quarta Capa: ${backX} a ${spineX}px (largura: ${coverWidth}px)
+- Lombada: ${spineX} a ${frontX}px (largura: ${spineWidth}px)
+- Capa Frontal: ${frontX} a ${frontX + coverWidth}px (largura: ${coverWidth}px)
+- Orelha Direita: ${frontX + coverWidth} a ${W}px`);
+
+        // Recortar Capa Frontal
+        const frontCanvas = document.createElement('canvas');
+        frontCanvas.width = coverWidth;
+        frontCanvas.height = H;
+        const frontCtx = frontCanvas.getContext('2d');
+        frontCtx.drawImage(fullCanvas, frontX, 0, coverWidth, H, 0, 0, coverWidth, H);
+
+        // Recortar Lombada
+        const spineCanvas = document.createElement('canvas');
+        spineCanvas.width = spineWidth;
+        spineCanvas.height = H;
+        const spineCtx = spineCanvas.getContext('2d');
+        spineCtx.drawImage(fullCanvas, spineX, 0, spineWidth, H, 0, 0, spineWidth, H);
+
+        // Recortar Quarta Capa
+        const backCanvas = document.createElement('canvas');
+        backCanvas.width = coverWidth;
+        backCanvas.height = H;
+        const backCtx = backCanvas.getContext('2d');
+        backCtx.drawImage(fullCanvas, backX, 0, coverWidth, H, 0, 0, coverWidth, H);
+
+        // Salvar Capa Frontal recortada isolada
+        const frontData = frontCanvas.toDataURL('image/jpeg', 0.95);
+        await fetch('/save-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: 'capa_frontal_oficial.jpg', image: frontData })
+        });
+        log('3. Capa frontal oficial recortada e salva como capa_frontal_oficial.jpg');
+
+        // Criar textura de miolo / páginas (folhas do livro)
+        const pagesSideCanvas = document.createElement('canvas');
+        pagesSideCanvas.width = 512;
+        pagesSideCanvas.height = 1024;
+        const pctx = pagesSideCanvas.getContext('2d');
+        pctx.fillStyle = '#f8f5ee'; // papel nobre levemente marfim/creme
+        pctx.fillRect(0, 0, 512, 1024);
+        // Linhas de páginas sutis
+        for (let y = 0; y < 1024; y += 4) {
+          pctx.fillStyle = (y % 8 === 0) ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.015)';
+          pctx.fillRect(0, y, 512, 2);
+        }
+
+        const pagesTopCanvas = document.createElement('canvas');
+        pagesTopCanvas.width = 512;
+        pagesTopCanvas.height = 256;
+        const ptctx = pagesTopCanvas.getContext('2d');
+        ptctx.fillStyle = '#f7f4ec';
+        ptctx.fillRect(0, 0, 512, 256);
+        for (let x = 0; x < 512; x += 4) {
+          ptctx.fillStyle = (x % 8 === 0) ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.015)';
+          ptctx.fillRect(x, 0, 2, 256);
+        }
+
+        // Criar Texturas Three.js
+        const frontTexture = new THREE.CanvasTexture(frontCanvas);
+        frontTexture.colorSpace = THREE.SRGBColorSpace;
+        frontTexture.anisotropy = 16;
+
+        const spineTexture = new THREE.CanvasTexture(spineCanvas);
+        spineTexture.colorSpace = THREE.SRGBColorSpace;
+        spineTexture.anisotropy = 16;
+
+        const backTexture = new THREE.CanvasTexture(backCanvas);
+        backTexture.colorSpace = THREE.SRGBColorSpace;
+        backTexture.anisotropy = 16;
+
+        const pagesSideTexture = new THREE.CanvasTexture(pagesSideCanvas);
+        pagesSideTexture.colorSpace = THREE.SRGBColorSpace;
+
+        const pagesTopTexture = new THREE.CanvasTexture(pagesTopCanvas);
+        pagesTopTexture.colorSpace = THREE.SRGBColorSpace;
+
+        log('4. Configurando cena 3D e renderizador WebGL...');
+        
+        // Configurar renderizador WebGL de alta resolução com fundo transparente
+        const renderW = 1600;
+        const renderH = 2000;
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+        renderer.setSize(renderW, renderH);
+        renderer.setPixelRatio(1);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(26, renderW / renderH, 0.1, 100);
+        camera.position.set(0, 0.1, 4.6);
+        camera.lookAt(0, 0, 0);
+
+        // Iluminação de estúdio fotográfico suave (sem sombras duras poligonais)
+        const ambLight = new THREE.AmbientLight(0xffffff, 1.15);
+        scene.add(ambLight);
+
+        // Luz principal difusa superior-esquerda
+        const keyLight = new THREE.DirectionalLight(0xfffaee, 1.2);
+        keyLight.position.set(-2, 4, 3.5);
+        scene.add(keyLight);
+
+        // Luz de preenchimento frontal-direita
+        const fillLight = new THREE.DirectionalLight(0xf0f5ff, 0.85);
+        fillLight.position.set(3, 1.5, 3);
+        scene.add(fillLight);
+
+        // Luz de borda / topo suave
+        const topLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        topLight.position.set(0, 5, 1);
+        scene.add(topLight);
+
+        // Materiais do Livro:
+        const bookMatRight = new THREE.MeshStandardMaterial({ map: pagesSideTexture, roughness: 0.8 });
+        const bookMatLeft = new THREE.MeshStandardMaterial({ map: spineTexture, roughness: 0.4 });
+        const bookMatTop = new THREE.MeshStandardMaterial({ map: pagesTopTexture, roughness: 0.8 });
+        const bookMatBottom = new THREE.MeshStandardMaterial({ map: pagesTopTexture, roughness: 0.8 });
+        const bookMatFront = new THREE.MeshStandardMaterial({ map: frontTexture, roughness: 0.35, metalness: 0.01 });
+        const bookMatBack = new THREE.MeshStandardMaterial({ map: backTexture, roughness: 0.4 });
+
+        const materials = [
+          bookMatRight,
+          bookMatLeft,
+          bookMatTop,
+          bookMatBottom,
+          bookMatFront,
+          bookMatBack
+        ];
+
+        // Dimensões do Livro:
+        const bookWidth = 1.0;
+        const bookHeight = (H / coverWidth) * bookWidth; // ~1.437
+        const bookDepth = (spineWidth / coverWidth) * bookWidth * 1.05; // ~0.07
+
+        const bookGeo = new THREE.BoxGeometry(bookWidth, bookHeight, bookDepth);
+        const bookMesh = new THREE.Mesh(bookGeo, materials);
+
+        const bookGroup = new THREE.Group();
+        bookGroup.add(bookMesh);
+        scene.add(bookGroup);
+
+        // Criar textura de sombra de contato multi-camadas realista e ultra-suave
+        function createSoftShadowMesh() {
+          const shadowCanvas = document.createElement('canvas');
+          shadowCanvas.width = 1024;
+          shadowCanvas.height = 512;
+          const sctx = shadowCanvas.getContext('2d');
+          
+          // Sombra de contato escura próxima
+          const g1 = sctx.createRadialGradient(512, 256, 20, 512, 256, 320);
+          g1.addColorStop(0, 'rgba(12, 22, 35, 0.38)');
+          g1.addColorStop(0.3, 'rgba(12, 22, 35, 0.22)');
+          g1.addColorStop(0.6, 'rgba(12, 22, 35, 0.08)');
+          g1.addColorStop(1, 'rgba(12, 22, 35, 0)');
+          sctx.fillStyle = g1;
+          sctx.fillRect(0, 0, 1024, 512);
+
+          // Sombra difusa ampla suave
+          const g2 = sctx.createRadialGradient(520, 270, 50, 520, 270, 480);
+          g2.addColorStop(0, 'rgba(15, 28, 42, 0.20)');
+          g2.addColorStop(0.4, 'rgba(15, 28, 42, 0.10)');
+          g2.addColorStop(0.8, 'rgba(15, 28, 42, 0.03)');
+          g2.addColorStop(1, 'rgba(15, 28, 42, 0)');
+          sctx.fillStyle = g2;
+          sctx.fillRect(0, 0, 1024, 512);
+
+          const shadowTex = new THREE.CanvasTexture(shadowCanvas);
+          const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.95 });
+          const shadowGeo = new THREE.PlaneGeometry(2.3, 1.15);
+          const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+          shadowMesh.rotation.x = -Math.PI / 2;
+          shadowMesh.position.set(0.08, -bookHeight / 2 - 0.12, 0.1);
+          return shadowMesh;
+        }
+
+        const shadow = createSoftShadowMesh();
+        scene.add(shadow);
+
+        // ==========================================
+        // 1. MOCKUP ESTILO HERO / FLUTUANTE (Idêntico ao ângulo editorial de referência)
+        // Inclinação sutil em Z e Y, livro flutuando com sombra suave por baixo
+        // ==========================================
+        bookGroup.rotation.set(0.05, -0.28, -0.06);
+        bookGroup.position.set(0, 0.08, 0);
+        shadow.position.set(0.05, -bookHeight / 2 - 0.14, 0.05);
+
+        log('5. Renderizando Mockup 1: Flutuante Editorial (Seção 01 / Hero)...');
+        renderer.render(scene, camera);
+        const imgMockup1 = renderer.domElement.toDataURL('image/png');
+        await fetch('/save-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: 'livro_3d_mockup.png', image: imgMockup1 })
+        });
+        log('SUCESSO: livro_3d_mockup.png salvo com sombra suave e transparência!');
+
+        // ==========================================
+        // 2. MOCKUP ESTILO 3/4 COM LOMBADA VISÍVEL
+        // Rotação onde a lombada (à esquerda) e a capa (à direita) aparecem juntas
+        // ==========================================
+        bookGroup.rotation.set(0.04, 0.42, 0.02);
+        bookGroup.position.set(-0.05, 0.05, 0);
+        shadow.position.set(-0.02, -bookHeight / 2 - 0.14, 0.05);
+
+        log('6. Renderizando Mockup 2: Ângulo com Lombada em Destaque...');
+        renderer.render(scene, camera);
+        const imgMockup2 = renderer.domElement.toDataURL('image/png');
+        await fetch('/save-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: 'livro_3d_lombada.png', image: imgMockup2 })
+        });
+        log('SUCESSO: livro_3d_lombada.png salvo!');
+
+        // ==========================================
+        // 3. MOCKUP FRONTAL SUAVE (Perfeito para cards de compra / produto)
+        // ==========================================
+        bookGroup.rotation.set(0.02, -0.12, -0.02);
+        bookGroup.position.set(0, 0.06, 0);
+        shadow.position.set(0.02, -bookHeight / 2 - 0.13, 0.02);
+
+        log('7. Renderizando Mockup 3: Frontal Elegante...');
+        renderer.render(scene, camera);
+        const imgMockup3 = renderer.domElement.toDataURL('image/png');
+        await fetch('/save-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: 'livro_3d_card.png', image: imgMockup3 })
+        });
+        log('SUCESSO: livro_3d_card.png salvo!');
+
+        // Mostrar previews no HTML
+        const previewsEl = document.getElementById('previews');
+        
+        const box1 = document.createElement('div');
+        box1.className = 'preview-box';
+        box1.innerHTML = '<h3>Mockup 3D Editorial</h3><img src="livro_salih_3d_mockup.png" />';
+        previewsEl.appendChild(box1);
+
+        const box2 = document.createElement('div');
+        box2.className = 'preview-box';
+        box2.innerHTML = '<h3>Capa Frontal Oficial</h3><img src="capa_frontal_oficial.jpg" />';
+        previewsEl.appendChild(box2);
+
+        window._done3D = true;
+      } catch (err) {
+        log('ERRO: ' + (err.stack || err.message));
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>

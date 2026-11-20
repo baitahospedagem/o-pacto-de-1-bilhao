@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@imgly/background-removal": "^1.7.0",
+    "@imgly/background-removal-node": "^1.4.5",
+    "heic-convert": "^2.1.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.5.438",
+    "three": "^0.187.0"
+  }
+}

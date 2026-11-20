@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador da Cédula de 1000 Dólares para Página do Livro</title>
+  <style>
+    body {
+      background: #06111a;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    .canvases {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+    }
+    .canvas-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      background: #0d1e2d;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    canvas {
+      width: 280px;
+      height: 403px; /* 1 : 1.44 */
+      border-radius: 0 6px 6px 0;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.7);
+    }
+    button {
+      padding: 8px 16px;
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <h1>Composição da Cédula de 1000 Dólares para as Páginas do Livro (1 : 1.44)</h1>
+  <div class="canvases">
+    <!-- Versão A: Cédula Vertical Personalizada com 1000 bem grande no topo e rodapé -->
+    <div class="canvas-card">
+      <h3>Design A: Nota Vertical Dedicada (1000 Visível em 4 Cantos + Cleveland Upright)</h3>
+      <canvas id="canvasA" width="700" height="1008"></canvas>
+      <button onclick="saveDesign('canvasA', 'pagina_nota_1000_designA.jpg')">Salvar Design A</button>
+    </div>
+
+    <!-- Versão B: Nota Original Rotacionada com 1000 100% Visível e Margens Gravadas -->
+    <div class="canvas-card">
+      <h3>Design B: Nota Original 1934 Rotacionada (Enquadramento Total dos $1.000)</h3>
+      <canvas id="canvasB" width="700" height="1008"></canvas>
+      <button onclick="saveDesign('canvasB', 'pagina_nota_1000_designB.jpg')">Salvar Design B</button>
+    </div>
+
+    <!-- Versão C: Duas Cédulas Completas Horizontais (Folha de Impressão Não-Cortada) -->
+    <div class="canvas-card">
+      <h3>Design C: Duas Notas Completas Horizontais (Uncut Sheet)</h3>
+      <canvas id="canvasC" width="700" height="1008"></canvas>
+      <button onclick="saveDesign('canvasC', 'pagina_nota_1000_designC.jpg')">Salvar Design C</button>
+    </div>
+  </div>
+
+  <script>
+    const imgObverse = new Image();
+    imgObverse.src = 'nota_1000_dolares_obverse.jpg';
+    const imgReverse = new Image();
+    imgReverse.src = 'nota_1000_dolares_reverse.jpg';
+
+    let loaded = 0;
+    function checkLoaded() {
+      loaded++;
+      if (loaded === 2) {
+        renderDesignA();
+        renderDesignB();
+        renderDesignC();
+      }
+    }
+    imgObverse.onload = checkLoaded;
+    imgReverse.onload = checkLoaded;
+
+    // DESIGN A: Cédula Vertical Customizada (Proporção Exata do Livro 1:1.44)
+    function renderDesignA() {
+      const c = document.getElementById('canvasA');
+      const ctx = c.getContext('2d');
+      const W = c.width;
+      const H = c.height;
+
+      // Fundo Papel Moeda / Parchment Currency Tone
+      ctx.fillStyle = '#ebefe3';
+      ctx.fillRect(0, 0, W, H);
+
+      // Micro-linhas de segurança guilloche de fundo
+      ctx.save();
+      ctx.strokeStyle = 'rgba(45, 75, 55, 0.07)';
+      ctx.lineWidth = 1.2;
+      for (let y = 0; y < H; y += 5) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.bezierCurveTo(W * 0.33, y + Math.sin(y*0.04)*10, W * 0.66, y - Math.sin(y*0.04)*10, W, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Bordas ornamentais completas de nota fiscal talhe-doce (Intaglio Borders)
+      const bPad = 14;
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#1b3324';
+      ctx.strokeRect(bPad, bPad, W - bPad*2, H - bPad*2);
+
+      const bPad2 = 22;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#274431';
+      ctx.strokeRect(bPad2, bPad2, W - bPad2*2, H - bPad2*2);
+
+      // 4 Cantos com o grande numeral '1000'
+      // Superior Esquerdo: 1000
+      ctx.drawImage(imgObverse, 35, 45, 260, 200, bPad2 + 8, bPad2 + 8, 175, 135);
+      // Superior Direito: 1000
+      ctx.drawImage(imgObverse, 1555, 45, 260, 200, W - bPad2 - 183, bPad2 + 8, 175, 135);
+      // Inferior Esquerdo: 1000
+      ctx.drawImage(imgObverse, 35, 550, 280, 190, bPad2 + 8, H - bPad2 - 145, 180, 125);
+      // Inferior Direito: 1000
+      ctx.drawImage(imgObverse, 1530, 550, 280, 190, W - bPad2 - 188, H - bPad2 - 145, 180, 125);
+
+      // Top Header: FEDERAL RESERVE NOTE
+      ctx.drawImage(imgObverse, 470, 48, 910, 115, bPad2 + 160, bPad2 + 20, W - (bPad2*2 + 320), 65);
+
+      // Título: THE UNITED STATES OF AMERICA (Logo abaixo do topo)
+      const usaW1 = W - (bPad2*2 + 140);
+      ctx.drawImage(imgObverse, 430, 660, 990, 65, (W - usaW1)/2, 160, usaW1, 48);
+
+      // Retrato Central Majestoso: Grover Cleveland com Wreath
+      const portW = 420;
+      const portH = 395;
+      ctx.drawImage(imgObverse, 670, 170, 510, 480, (W - portW)/2, 235, portW, portH);
+
+      // Selo do Federal Reserve (Esquerda do retrato)
+      ctx.drawImage(imgObverse, 335, 345, 260, 260, bPad2 + 25, 320, 155, 155);
+
+      // Selo Verde do Tesouro (Direita do retrato)
+      ctx.drawImage(imgObverse, 1245, 335, 270, 270, W - bPad2 - 180, 320, 155, 155);
+
+      // Números de Série Verdes Oficiais L00000172 ★
+      ctx.drawImage(imgObverse, 1120, 220, 340, 70, W - bPad2 - 210, 240, 195, 40);
+      ctx.drawImage(imgObverse, 305, 625, 350, 70, bPad2 + 18, 605, 195, 40);
+
+      // Letra Série e Assinaturas
+      ctx.drawImage(imgObverse, 280, 215, 110, 110, bPad2 + 75, 235, 65, 65);
+      ctx.drawImage(imgObverse, 1485, 215, 110, 110, W - bPad2 - 140, 235, 65, 65);
+
+      // Faixa Ornamental Central (Extraída do verso)
+      const revScrollW = W - (bPad2*2 + 60);
+      ctx.drawImage(imgReverse, 350, 70, 1150, 140, (W - revScrollW)/2, 655, revScrollW, 75);
+
+      // Faixa Destaque: ONE THOUSAND DOLLARS
+      const otdW = W - (bPad2*2 + 40);
+      ctx.drawImage(imgObverse, 370, 720, 1110, 100, (W - otdW)/2, 740, otdW, 68);
+
+      // Ornamento inferior do reverso com arabescos
+      const botOrnW = 380;
+      ctx.drawImage(imgReverse, 720, 680, 410, 90, (W - botOrnW)/2, 825, botOrnW, 80);
+
+      // Texto clássico gótico na base
+      ctx.font = 'bold 22px "Libre Baskerville", Georgia, serif';
+      ctx.fillStyle = '#1b3324';
+      ctx.textAlign = 'center';
+      ctx.letterSpacing = '5px';
+      ctx.fillText('WILL PAY TO THE BEARER ON DEMAND', W/2, 925);
+
+      // Vignette suave de curvatura de página
+      ctx.save();
+      const grad = ctx.createLinearGradient(0, 0, W, 0);
+      grad.addColorStop(0, 'rgba(0,0,0,0.20)');
+      grad.addColorStop(0.06, 'rgba(0,0,0,0.04)');
+      grad.addColorStop(0.94, 'transparent');
+      grad.addColorStop(1, 'rgba(0,0,0,0.15)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+
+      // Salva automaticamente a imagem pronta
+      saveDesign('canvasA', 'pagina_nota_1000_oficial.jpg');
+    }
+
+    // DESIGN B: Nota Original Rotacionada com 1000 100% visível nos cantos
+    function renderDesignB() {
+      const c = document.getElementById('canvasB');
+      const ctx = c.getContext('2d');
+      const W = c.width;
+      const H = c.height;
+
+      ctx.fillStyle = '#102217';
+      ctx.fillRect(0, 0, W, H);
+
+      // Fundo papel moeda
+      ctx.fillStyle = '#e8ecdf';
+      ctx.fillRect(20, 20, W - 40, H - 40);
+
+      ctx.save();
+      // Rotaciona 90 graus
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate(Math.PI / 2);
+
+      // Dimensões da nota na rotação
+      const noteW = H - 50; // 958
+      const noteH = noteW / (imgObverse.width / imgObverse.height); // 958 / 2.367 = 404
+      ctx.drawImage(imgObverse, -noteW/2, -noteH/2, noteW, noteH);
+      ctx.restore();
+
+      // Sombra na lombada
+      const spineGrad = ctx.createLinearGradient(0, 0, 50, 0);
+      spineGrad.addColorStop(0, 'rgba(0,0,0,0.3)');
+      spineGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = spineGrad;
+      ctx.fillRect(0, 0, 50, H);
+    }
+
+    // DESIGN C: Duas Notas Completas Horizontais
+    function renderDesignC() {
+      const c = document.getElementById('canvasC');
+      const ctx = c.getContext('2d');
+      const W = c.width;
+      const H = c.height;
+
+      ctx.fillStyle = '#102217';
+      ctx.fillRect(0, 0, W, H);
+
+      const margin = 24;
+      const billW = W - margin * 2;
+      const billH = billW / (imgObverse.width / imgObverse.height); // 652 / 2.367 = 275
+
+      // Nota 1 (Superior)
+      const y1 = 120;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 15;
+      ctx.drawImage(imgObverse, margin, y1, billW, billH);
+      ctx.restore();
+
+      // Nota 2 (Inferior - Obverse ou Reverse)
+      const y2 = y1 + billH + 80;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 15;
+      ctx.drawImage(imgReverse, margin, y2, billW, billH);
+      ctx.restore();
+
+      // Cabeçalho institucional entre ou acima
+      ctx.font = 'bold 22px "Libre Baskerville", Georgia, serif';
+      ctx.fillStyle = '#c5a059';
+      ctx.textAlign = 'center';
+      ctx.fillText('UNITED STATES CURRENCY', W/2, 70);
+    }
+
+    async function saveDesign(canvasId, filename) {
+      const canvas = document.getElementById(canvasId);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      const res = await fetch('/save-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: filename, image: dataUrl })
+      });
+      const json = await res.json();
+      alert('Salvo: ' + json.path);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Recorte Perfeito dos Livros Reais</title>
+  <style>
+    body { font-family: sans-serif; background: #0c1822; color: #fff; margin: 0; padding: 20px; text-align: center; }
+    #log { white-space: pre-wrap; font-family: monospace; background: #060e14; padding: 10px; border-radius: 6px; max-height: 200px; overflow: auto; text-align: left; max-width: 900px; margin: 10px auto; color: #9ed7aa; font-size: 12px; }
+    .grid { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
+    .item { background: #13222e; padding: 15px; border-radius: 8px; max-width: 480px; }
+    .item img { max-width: 100%; border-radius: 6px; background-image: repeating-linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222), repeating-linear-gradient(45deg, #222 25%, #181818 25%, #181818 75%, #222 75%, #222); background-position: 0 0, 8px 8px; background-size: 16px 16px; }
+  </style>
+</head>
+<body>
+  <h1>Recorte Perfeito dos Livros — Sem Fundo e Sem Reflexos</h1>
+  <div id="log">Processando imagem em alta resolução...</div>
+  <div class="grid" id="grid"></div>
+
+  <script type="module">
+    const logEl = document.getElementById('log');
+    function log(msg) {
+      console.log(msg);
+      logEl.textContent += '\n' + msg;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    async function run() {
+      try {
+        log('1. Carregando imagem original livros_reais_foto.jpg (3024x4032)...');
+        const img = new Image();
+        img.src = '/livros_reais_foto.jpg';
+        await img.decode();
+        log(`Imagem carregada: ${img.width}x${img.height}px.`);
+
+        const scale = 0.5; // 1512x2016 para excelente resolução e nitidez
+        const W = Math.round(img.width * scale);
+        const H = Math.round(img.height * scale);
+
+        // ========================================================
+        // 1. RECORTE DA FOTO REAL (Remover mesa de madeira e vidro)
+        // ========================================================
+        log('2. Construindo máscara com transparência real...');
+        const maskCanvas = document.createElement('canvas');
+        maskCanvas.width = W;
+        maskCanvas.height = H;
+        const mctx = maskCanvas.getContext('2d');
+        // Limpar tudo para transparente
+        mctx.clearRect(0, 0, W, H);
+
+        // Bloco 1 (Topo):
+        const polyTop = [
+          [0.354, 0.122],
+          [0.665, 0.103],
+          [0.690, 0.145],
+          [0.720, 0.165],
+          [0.760, 0.188],
+          [0.805, 0.215],
+          [0.852, 0.238],
+          [0.915, 0.248],
+          [0.988, 0.265],
+          [0.995, 0.298],
+          [0.970, 0.335],
+          [0.925, 0.370],
+          [0.885, 0.408],
+          [0.825, 0.448],
+          [0.748, 0.468],
+          [0.665, 0.472],
+          [0.582, 0.460],
+          [0.505, 0.445],
+          [0.395, 0.435],
+          [0.378, 0.350],
+          [0.360, 0.220]
+        ];
+
+        // Bloco 2 (Inferior / Espiral):
+        const polyBottom = [
+          [0.445, 0.468],
+          [0.518, 0.485],
+          [0.575, 0.510],
+          [0.628, 0.535],
+          [0.672, 0.565],
+          [0.760, 0.625],
+          [0.730, 0.690],
+          [0.700, 0.745],
+          [0.680, 0.795],
+          [0.635, 0.850],
+          [0.585, 0.910],
+          [0.520, 0.940],
+          [0.440, 0.948],
+          [0.375, 0.920],
+          [0.305, 0.880],
+          [0.238, 0.815],
+          [0.180, 0.745],
+          [0.092, 0.695],
+          [0.125, 0.625],
+          [0.170, 0.570],
+          [0.225, 0.525],
+          [0.325, 0.495]
+        ];
+
+        function drawShape(pts) {
+          mctx.beginPath();
+          mctx.moveTo(pts[0][0] * W, pts[0][1] * H);
+          for (let i = 1; i < pts.length; i++) {
+            mctx.lineTo(pts[i][0] * W, pts[i][1] * H);
+          }
+          mctx.closePath();
+          mctx.fillStyle = '#ffffff';
+          mctx.fill();
+        }
+
+        drawShape(polyTop);
+        drawShape(polyBottom);
+
+        // Suavizar 1.5px na borda da máscara
+        mctx.filter = 'blur(1.5px)';
+        mctx.drawImage(maskCanvas, 0, 0);
+        mctx.filter = 'none';
+
+        const cutCanvas = document.createElement('canvas');
+        cutCanvas.width = W;
+        cutCanvas.height = H;
+        const cctx = cutCanvas.getContext('2d');
+        cctx.drawImage(img, 0, 0, W, H);
+
+        // Aplicar máscara alpha
+        cctx.globalCompositeOperation = 'destination-in';
+        cctx.drawImage(maskCanvas, 0, 0);
+        cctx.globalCompositeOperation = 'source-over';
+
+        // 3. Atenuação de reflexos brancos do plástico no terno escuro
+        log('3. Removendo reflexos brancos do plástico nos ternos...');
+        const imgData = cctx.getImageData(0, 0, W, H);
+        const data = imgData.data;
+
+        // Tratar brilhos especulares no terno do livro inferior
+        // Terno: pixels com luminância moderada mas que pertencem à silhueta escura
+        for (let y = Math.round(H * 0.63); y < Math.round(H * 0.86); y++) {
+          for (let x = Math.round(W * 0.16); x < Math.round(W * 0.44); x++) {
+            const idx = (y * W + x) * 4;
+            if (data[idx + 3] > 50) {
+              const r = data[idx], g = data[idx+1], b = data[idx+2];
+              // Reflexo branco sobre preto:
+              if (r > 75 && g > 75 && b > 75 && r < 210 && g < 210 && b < 210) {
+                // Reduzir o brilho do reflexo preservando a textura
+                data[idx] = Math.round(r * 0.4 + 15);
+                data[idx+1] = Math.round(g * 0.4 + 15);
+                data[idx+2] = Math.round(b * 0.4 + 18);
+              }
+            }
+          }
+        }
+
+        // Terno do livro superior
+        for (let y = Math.round(H * 0.31); y < Math.round(H * 0.42); y++) {
+          for (let x = Math.round(W * 0.40); x < Math.round(W * 0.64); x++) {
+            const idx = (y * W + x) * 4;
+            if (data[idx + 3] > 50) {
+              const r = data[idx], g = data[idx+1], b = data[idx+2];
+              if (r > 90 && g > 90 && b > 90 && r < 215 && g < 215 && b < 215) {
+                data[idx] = Math.round(r * 0.38 + 15);
+                data[idx+1] = Math.round(g * 0.38 + 15);
+                data[idx+2] = Math.round(b * 0.38 + 18);
+              }
+            }
+          }
+        }
+
+        cctx.putImageData(imgData, 0, 0);
+
+        // Bounding box para recortar espaço transparente extra
+        let minX = W, maxX = 0, minY = H, maxY = 0;
+        for (let y = 0; y < H; y++) {
+          for (let x = 0; x < W; x++) {
+            if (data[(y * W + x) * 4 + 3] > 10) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        const pad = 30;
+        minX = Math.max(0, minX - pad);
+        minY = Math.max(0, minY - pad);
+        maxX = Math.min(W, maxX + pad);
+        maxY = Math.min(H, maxY + pad);
+        const cropW = maxX - minX;
+        const cropH = maxY - minY;
+
+        const realOutCanvas = document.createElement('canvas');
+        realOutCanvas.width = cropW;
+        realOutCanvas.height = cropH;
+        const roctx = realOutCanvas.getContext('2d');
+        // Sombra de contato suave e realista
+        roctx.filter = 'drop-shadow(0 20px 30px rgba(10, 22, 35, 0.22))';
+        roctx.drawImage(cutCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+
+        log('4. Salvando livros_foto_recortada.png...');
+        const realPng = realOutCanvas.toDataURL('image/png');
+        await fetch('/save-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: 'livros_foto_recortada.png', image: realPng })
+        });
+        log('SUCESSO: livros_foto_recortada.png salvo com transparência e sem fundo!');
+
+        // ========================================================
+        // 2. VERSÃO EDITORIAL (Fundo 100% transparente da versão estúdio)
+        // ========================================================
+        log('5. Processando versão estúdio limpa com transparência pura...');
+        const studioImg = new Image();
+        studioImg.src = '/livros_sem_fundo_base.jpg';
+        await studioImg.decode();
+
+        const sCanvas = document.createElement('canvas');
+        sCanvas.width = studioImg.width;
+        sCanvas.height = studioImg.height;
+        const sctx = sCanvas.getContext('2d');
+        sctx.drawImage(studioImg, 0, 0);
+
+        const sData = sctx.getImageData(0, 0, sCanvas.width, sCanvas.height);
+        const sd = sData.data;
+
+        for (let i = 0; i < sd.length; i += 4) {
+          const r = sd[i], g = sd[i+1], b = sd[i+2];
+          // Fundo branco puro
+          if (r > 250 && g > 250 && b > 250) {
+            sd[i+3] = 0;
+          } else if (r > 230 && g > 230 && b > 230) {
+            // Suave gradiente de sombra
+            const avg = (r + g + b) / 3;
+            sd[i+3] = Math.round((255 - avg) / 25 * 255);
+          }
+        }
+        sctx.putImageData(sData, 0, 0);
+
+        const studioPng = sCanvas.toDataURL('image/png');
+        await fetch('/save-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: 'livros_estudio_transparente.png', image: studioPng })
+        });
+        log('SUCESSO: livros_estudio_transparente.png salvo com transparência pura!');
+
+        // Exibir no DOM
+        const grid = document.getElementById('grid');
+
+        const item1 = document.createElement('div');
+        item1.className = 'item';
+        item1.innerHTML = '<h3>Foto Real Isolada (Sem Mesa / Reflexos)</h3><img src="livros_foto_recortada.png" />';
+        grid.appendChild(item1);
+
+        const item2 = document.createElement('div');
+        item2.className = 'item';
+        item2.innerHTML = '<h3>Versão Estúdio Matte (Fundo Transparente)</h3><img src="livros_estudio_transparente.png" />';
+        grid.appendChild(item2);
+
+      } catch (err) {
+        log('ERRO: ' + (err.stack || err.message));
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>

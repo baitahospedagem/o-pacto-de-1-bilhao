@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Teste Layout Nota 1000 Dólares</title>
+  <style>
+    body {
+      background: #06111a;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      gap: 30px;
+    }
+    h1 { font-size: 20px; margin-bottom: 10px; }
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+    }
+    .card-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .page-preview {
+      width: 280px;
+      height: 403px; /* 1 : 1.44 ratio */
+      border-radius: 0 8px 8px 0;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+      background: #e8ece5;
+    }
+
+    /* Opção 1: Rotacionada 90 graus preenchendo a folha (cover) */
+    .opt-1 {
+      background: #e8ece5 url('nota_1000_dolares_obverse.jpg') center center / cover no-repeat;
+      transform: rotate(90deg);
+      width: 403px;
+      height: 280px;
+      position: absolute;
+      top: 61.5px;
+      left: -61.5px;
+    }
+
+    /* Opção 2: Duas notas empilhadas horizontalmente (estilo folha de impressão / uncut sheet) */
+    .opt-2 {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      background: #1a2e22;
+      padding: 6px;
+      box-sizing: border-box;
+      gap: 6px;
+    }
+    .opt-2 .bill {
+      flex: 1;
+      background: url('nota_1000_dolares_obverse.jpg') center center / contain no-repeat;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Opção 3: Rotacionada -90 graus contida com bordas elegantes de nota */
+    .opt-3-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f2419;
+      overflow: hidden;
+    }
+    .opt-3 {
+      width: 403px;
+      height: 280px;
+      background: url('nota_1000_dolares_obverse.jpg') center center / contain no-repeat;
+      transform: rotate(-90deg);
+    }
+
+    /* Opção 4: Composição de nota vertical personalizada com textura e elementos do dólar */
+    .opt-4 {
+      width: 100%;
+      height: 100%;
+      background: url('nota_1000_dolares_obverse.jpg') center center / cover no-repeat;
+    }
+  </style>
+</head>
+<body>
+  <h1>Comparação Visual de Formato para a Nota de 1000 Dólares na Página do Livro</h1>
+  <div class="grid">
+    <div class="card-wrap">
+      <h3>Opção 1: Rotacionada 90° (Cover vertical)</h3>
+      <div class="page-preview" style="position:relative;">
+        <div class="opt-1"></div>
+      </div>
+    </div>
+
+    <div class="card-wrap">
+      <h3>Opção 2: Duas Notas Empilhadas</h3>
+      <div class="page-preview">
+        <div class="opt-2">
+          <div class="bill"></div>
+          <div class="bill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-wrap">
+      <h3>Opção 3: Rotacionada -90° (Contain)</h3>
+      <div class="page-preview">
+        <div class="opt-3-container">
+          <div class="opt-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-wrap">
+      <h3>Opção 4: Horizontal Esticada / Cover</h3>
+      <div class="page-preview">
+        <div class="opt-4"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
