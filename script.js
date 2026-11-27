@@ -1070,20 +1070,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 8. Animação de Zoom e Folheação Rápida do Livro (Seção 01) — Thumb Riffle
+  // 8. Animação de Folheação / Vídeo do Livro (Seção 01)
   function initBookFlipOnScroll() {
     const stage = document.getElementById('book-riffle-stage');
     if (!stage) return;
 
+    const riffleVideo = document.getElementById('book-riffle-video');
     const frontCover = document.getElementById('riffle-front-cover');
     const leaves = Array.from(document.querySelectorAll('.riffle-leaf'));
 
     let isPlaying = false;
     let hasAnimated = false;
     let lockedScrollY = 0;
+    let videoSafetyTimeout = null;
 
     function resetRiffle() {
       stage.classList.remove('is-active', 'is-zoomed', 'show-title');
+      if (videoSafetyTimeout) {
+        clearTimeout(videoSafetyTimeout);
+        videoSafetyTimeout = null;
+      }
+      if (riffleVideo) {
+        riffleVideo.pause();
+        riffleVideo.currentTime = 0;
+      }
       if (frontCover) {
         frontCover.style.transition = 'none';
         frontCover.style.transform = 'rotateY(0deg)';
@@ -1096,15 +1106,67 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    function closeRiffle(onComplete) {
+      if (videoSafetyTimeout) {
+        clearTimeout(videoSafetyTimeout);
+        videoSafetyTimeout = null;
+      }
+      stage.style.transition = 'opacity 0.6s ease';
+      stage.classList.remove('is-active');
+
+      setTimeout(() => {
+        if (riffleVideo) {
+          riffleVideo.pause();
+          riffleVideo.currentTime = 0;
+        }
+        stage.classList.remove('is-zoomed', 'show-title');
+        stage.style.transition = '';
+        isPlaying = false;
+        hasAnimated = true;
+        if (onComplete) onComplete();
+      }, 600);
+    }
+
     function playRiffleAnimation(onComplete) {
       if (isPlaying) return;
       isPlaying = true;
       lockedScrollY = window.scrollY;
 
-      // 1. Zoom in: amplia na tela
       resetRiffle();
+      stage.style.transition = 'opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
       stage.classList.add('is-active');
 
+      // MODO 1: Se o vídeo estiver presente, executa o vídeo fullscreen
+      if (riffleVideo) {
+        riffleVideo.currentTime = 0;
+        const playPromise = riffleVideo.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            riffleVideo.muted = true;
+            riffleVideo.play().catch(() => {});
+          });
+        }
+
+        // Ao terminar o vídeo, fecha suavemente com fade out
+        riffleVideo.onended = () => {
+          closeRiffle(onComplete);
+        };
+
+        // Trava de segurança: garante o fechamento após a duração do vídeo
+        const durMs = (riffleVideo.duration && !isNaN(riffleVideo.duration))
+          ? (riffleVideo.duration * 1000 + 400)
+          : 3400;
+
+        videoSafetyTimeout = setTimeout(() => {
+          if (isPlaying) {
+            closeRiffle(onComplete);
+          }
+        }, durMs);
+
+        return;
+      }
+
+      // MODO 2 (DOM 3D anterior preservado):
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           stage.classList.add('is-zoomed');
@@ -1138,23 +1200,15 @@ document.addEventListener('DOMContentLoaded', () => {
           }, delay);
         });
 
-        // 3. Ao invés de voltar para a capa, o livro dissolve e surge o Título bem grande com fade in (Print 2)
+        // 3. O livro dissolve e surge o Título bem grande com fade in
         const finishTime = 120 + (totalLeaves * 55) + 240;
         setTimeout(() => {
           stage.classList.add('show-title');
 
-          // 4. Permanece exibindo o título cinematográfico e conclui mantendo a página 100% estática no mesmo bloco
+          // 4. Permanece exibindo o título cinematográfico e conclui
           setTimeout(() => {
-            stage.style.transition = 'opacity 0.6s ease';
-            stage.classList.remove('is-active');
-
-            setTimeout(() => {
-              stage.classList.remove('is-zoomed', 'show-title');
-              isPlaying = false;
-              hasAnimated = true;
-              if (onComplete) onComplete();
-            }, 600);
-          }, 1800); // Exibição do título
+            closeRiffle(onComplete);
+          }, 1800);
 
         }, finishTime);
 
@@ -1169,16 +1223,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Clique no próprio overlay para acelerar/pular se desejado
+    // Clique no próprio overlay para acelerar/fechar se desejado
     stage.addEventListener('click', () => {
       if (isPlaying) {
-        stage.style.transition = 'opacity 0.35s ease';
-        stage.classList.remove('is-active');
-        setTimeout(() => {
-          stage.classList.remove('is-zoomed', 'show-title');
-          isPlaying = false;
-          hasAnimated = true;
-        }, 350);
+        closeRiffle();
       }
     });
 

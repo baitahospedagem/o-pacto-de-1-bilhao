@@ -42,6 +42,7 @@ if (function_exists('wc_get_product')) {
 
 $template_uri = get_stylesheet_directory_uri();
 $asset_hero   = file_exists(get_stylesheet_directory() . '/hero_autor_livro.png') ? $template_uri . '/hero_autor_livro.png' : $template_uri . '/assets/images/hero_autor_livro.png';
+$asset_hero_mobile = file_exists(get_stylesheet_directory() . '/hero_autor_livro_mobile.jpg') ? $template_uri . '/hero_autor_livro_mobile.jpg' : $asset_hero;
 $asset_hero_slide2 = file_exists(get_stylesheet_directory() . '/hero_slide_2.webp') ? $template_uri . '/hero_slide_2.webp' : (file_exists(get_stylesheet_directory() . '/hero_slide_2.jpg') ? $template_uri . '/hero_slide_2.jpg' : $template_uri . '/assets/images/hero_slide_2.webp');
 $asset_editorial = file_exists(get_stylesheet_directory() . '/editorial_autor_livro.png') ? $template_uri . '/editorial_autor_livro.png' : $template_uri . '/assets/images/editorial_autor_livro.png';
 $asset_pb2 = file_exists(get_stylesheet_directory() . '/PB2.png') ? $template_uri . '/PB2.png' : $template_uri . '/assets/images/PB2.png';
@@ -71,7 +72,7 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="<?php echo esc_url($template_uri . '/style.css?v=10.3'); ?>">
+  <link rel="stylesheet" href="<?php echo esc_url($template_uri . '/style.css?v=12.79'); ?>">
 
   <?php wp_head(); ?>
 </head>
@@ -113,14 +114,17 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
 
           <!-- Slide 2 Background (O Pacto de 1 Bilhão - Livro) -->
           <div class="hero-slider__bg-slide" data-slide="1">
-            <img 
-              class="hero-bg-img" 
-              src="<?php echo esc_url($asset_hero); ?>" 
-              alt="Salih Abdulatif segurando o livro O Pacto de 1 Bilhão" 
-              width="2560" 
-              height="1440" 
-              loading="lazy"
-            >
+            <picture>
+              <source media="(max-width: 720px)" srcset="<?php echo esc_url($asset_hero_mobile); ?>">
+              <img 
+                class="hero-bg-img" 
+                src="<?php echo esc_url($asset_hero); ?>" 
+                alt="Salih Abdulatif segurando o livro O Pacto de 1 Bilhão" 
+                width="2560" 
+                height="1440" 
+                loading="lazy"
+              >
+            </picture>
             <div class="hero-bg-overlay"></div>
           </div>
         </div>
@@ -205,7 +209,7 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
           <div class="section-heading section-heading--split" data-reveal>
             <div>
               <span class="section-index">01 — POR QUE ESTE LIVRO?</span>
-              <h2>Uma obra para levar<br>consigo <em>além da<br>primeira leitura.</em></h2>
+              <h2>Uma obra para<br class="br-why-tablet"> levar<br class="br-why-desktop"> consigo<br class="br-why-tablet"> <em>além da<br>primeira leitura.</em></h2>
             </div>
             <div class="section-heading__desc">
               <p>
@@ -280,18 +284,22 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
             </div>
           </div>
           <div class="author__copy" data-reveal>
-            <span class="section-index">02 — A HISTÓRIA POR TRÁS DA OBRA</span>
-            <h2>A palavra ganha peso quando carrega uma <em>trajetória.</em></h2>
-            <p class="author__lead">
-              Salih Abdulatif é um empresário brasileiro e turco que se orgulha das duas nacionalidades. Nasceu numa roça em Rondônia, foi criado pelo avô libanês e começou a trabalhar aos 12 anos de idade. Aprendeu árabe e outros três idiomas quase por acidente, sem nunca ter entrado em uma universidade formal.
-            </p>
-            <p class="author__lead" style="margin-top: 1rem;">
-              Em sua jornada, abriu 23 empresas em nove países, conhecendo tanto a geração de grandes volumes quanto o peso de perdas completas. Falido cinco vezes e com dívidas acumuladas aos 40 anos, começou a escrever este livro para relatar o seu pacto de um bilhão. Casado e pai de três filhos, vive entre Istambul, Dubai e o Rio de Janeiro.
-            </p>
-            <div class="author__line" aria-hidden="true"></div>
-            <p class="author__caption">
-              “Um homem que já morreu uma vez não tem mais medo de quase nada.” — Salih Abdulatif
-            </p>
+            <div class="author__title-group">
+              <span class="section-index">02 — A HISTÓRIA POR TRÁS DA OBRA</span>
+              <h2>A palavra ganha peso quando carrega uma <em>trajetória.</em></h2>
+            </div>
+            <div class="author__desc-group">
+              <p class="author__lead">
+                Salih Abdulatif é um empresário brasileiro e turco que se orgulha das duas nacionalidades. Nasceu numa roça em Rondônia, foi criado pelo avô libanês e começou a trabalhar aos 12 anos de idade. Aprendeu árabe e outros três idiomas quase por acidente, sem nunca ter entrado em uma universidade formal.
+              </p>
+              <p class="author__lead" style="margin-top: 1rem;">
+                Em sua jornada, abriu 23 empresas em nove países, conhecendo tanto a geração de grandes volumes quanto o peso de perdas completas. Falido cinco vezes e com dívidas acumuladas aos 40 anos, começou a escrever este livro para relatar o seu pacto de um bilhão. Casado e pai de três filhos, vive entre Istambul, Dubai e o Rio de Janeiro.
+              </p>
+              <div class="author__line" aria-hidden="true"></div>
+              <p class="author__caption">
+                “Um homem que já morreu uma vez não tem mais medo de quase nada.” — Salih Abdulatif
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -499,7 +507,7 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
           <div class="social-proof__head" data-reveal>
             <div>
               <span class="section-index">05 — PROVA SOCIAL</span>
-              <h2>A experiência de quem<br><em>já encontrou estas páginas.</em></h2>
+              <h2>A experiência de<br class="br-sp-tablet"><br class="br-sp-mobile"> quem<br class="br-sp-desktop"> <em>já<br class="br-sp-tablet"> encontrou<br class="br-sp-mobile"> estas<br class="br-sp-tablet"> páginas.</em></h2>
             </div>
             <div class="social-proof__desc">
               <p>Palavras e reflexões autênticas dos primeiros leitores e da síntese editorial oficial da obra.</p>
@@ -937,7 +945,7 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
         <div class="shell-container final-cta__inner" data-reveal>
           <div>
             <span class="section-index">07 — UMA DECISÃO</span>
-            <h2>A próxima grande virada<br><em>começa com uma decisão.</em></h2>
+            <h2>A próxima grande<br class="br-cta-tablet"><br class="br-cta-mobile"> virada<br class="br-cta-desktop"> <em>começa<br class="br-cta-tablet"> com<br class="br-cta-mobile"> uma decisão.</em></h2>
             <p>Escolha sua edição e leve esta leitura para o seu próximo capítulo. Uma obra sóbria, profunda e transformadora para a sua jornada.</p>
             <button class="button button--gold" id="btn-final-cta">
               Comprar agora <span>↗</span>
@@ -1007,8 +1015,8 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
         <span>O Pacto de 1 Bilhão</span>
         <small>Físico e Digital</small>
       </div>
-      <button class="button button--gold" id="btn-sticky-action">
-        Ver edições <span>↗</span>
+      <button class="button button--green" id="btn-sticky-action">
+        <span>Comprar agora!</span> <span>↗</span>
       </button>
     </div>
 
@@ -1020,17 +1028,24 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
 
   </div>
 
-  <!-- PALCO DA ANIMAÇÃO DE FOLHEAÇÃO RÁPIDA ESTILO VÍDEO -->
+  <!-- PALCO DA ANIMAÇÃO DO LIVRO (VÍDEO OFICIAL FULLSCREEN OU 3D) -->
   <div class="book-riffle-stage" id="book-riffle-stage" aria-hidden="true">
+    <video
+      id="book-riffle-video"
+      class="riffle-video"
+      src="<?php echo esc_url($template_uri . '/livro_animacao.mp4'); ?>"
+      playsinline
+      muted
+      preload="auto"
+    ></video>
+
+    <!-- ANIMAÇÃO DOM 3D ANTERIOR (PRESERVADA PARA FÁCIL RETORNO) -->
+    <!--
     <div class="riffle-book-scene" id="riffle-book-scene">
       <div class="riffle-book">
-        
-        <!-- LOMBO E CAPA TRASEIRA -->
         <div class="riffle-book__spine"></div>
         <div class="riffle-book__back-cover"></div>
         <div class="riffle-book__page-block"></div>
-
-        <!-- 14 FOLHAS REAIS DE PAPEL QUE FLUTUAM / FOLHEIAM RAPIDAMENTE -->
         <div class="riffle-leaf" style="z-index: 10;" data-leaf="0"><div class="riffle-leaf__shadow"></div></div>
         <div class="riffle-leaf" style="z-index: 11;" data-leaf="1"><div class="riffle-leaf__shadow"></div></div>
         <div class="riffle-leaf" style="z-index: 12;" data-leaf="2"><div class="riffle-leaf__shadow"></div></div>
@@ -1045,21 +1060,18 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
         <div class="riffle-leaf" style="z-index: 21;" data-leaf="11"><div class="riffle-leaf__shadow"></div></div>
         <div class="riffle-leaf" style="z-index: 22;" data-leaf="12"><div class="riffle-leaf__shadow"></div></div>
         <div class="riffle-leaf" style="z-index: 23;" data-leaf="13"><div class="riffle-leaf__shadow"></div></div>
-
-        <!-- CAPA FRONTAL (ABRE E REVELA O FOLHEAR) -->
         <div class="riffle-book__front-cover" id="riffle-front-cover" style="background-image: url('<?php echo esc_url($template_uri . '/capa_frontal_oficial.jpg'); ?>');"></div>
-
       </div>
     </div>
 
-    <!-- TÍTULO CINEMATOGRÁFICO DE CONCLUSÃO (PRINT 2) -->
     <div class="riffle-final-title" id="riffle-final-title" aria-hidden="true">
       <span class="riffle-final-title__line-1">O Pacto de</span>
       <em class="riffle-final-title__line-2">1 Bilhão</em>
     </div>
+    -->
   </div>
 
-  <script src="<?php echo esc_url($template_uri . '/script.js?v=6.6'); ?>"></script>
+  <script src="<?php echo esc_url($template_uri . '/script.js?v=6.7'); ?>"></script>
   <?php wp_footer(); ?>
 </body>
 </html>
