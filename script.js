@@ -366,25 +366,55 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // 3. Suporte ao toque vertical (Swipe vertical no mobile)
-    let touchStartY = 0;
-    hero.addEventListener('touchstart', (e) => {
+    // 3. Suporte ao toque vertical e rolagem no mobile (iOS / Android)
+    let heroTouchStartY = 0;
+    let heroTouchStartX = 0;
+    let heroTouchHandled = false;
+
+    window.addEventListener('touchstart', (e) => {
       if (e.touches && e.touches[0]) {
-        touchStartY = e.touches[0].clientY;
+        heroTouchStartY = e.touches[0].clientY;
+        heroTouchStartX = e.touches[0].clientX;
+        heroTouchHandled = false;
       }
     }, { passive: true });
 
-    hero.addEventListener('touchmove', (e) => {
-      if (window.scrollY <= 15 && currentIndex === 0 && !isScrollSwitching && e.touches && e.touches[0]) {
-        const currentY = e.touches[0].clientY;
-        const diffY = touchStartY - currentY;
-        // Se arrastou para cima (gesto de scroll para baixo) mais de 35px:
-        if (diffY > 35) {
+    window.addEventListener('touchmove', (e) => {
+      if (heroTouchHandled || isScrollSwitching) return;
+      const isAtHero = window.scrollY <= 25;
+      if (!isAtHero || !e.touches || !e.touches[0]) return;
+
+      const currentY = e.touches[0].clientY;
+      const currentX = e.touches[0].clientX;
+      const diffY = heroTouchStartY - currentY;
+      const diffX = Math.abs(heroTouchStartX - currentX);
+
+      // Se for gesto vertical preponderante
+      if (Math.abs(diffY) > 28 && Math.abs(diffY) > diffX) {
+        // Se estiver no Slide 0 e arrastou para cima (rolar para baixo):
+        if (diffY > 0 && currentIndex === 0) {
+          heroTouchHandled = true;
           if (e.cancelable) e.preventDefault();
           triggerScrollSwitch(1);
+          return;
+        }
+        // Se estiver no Slide 1 e arrastou para baixo (rolar para cima):
+        if (diffY < 0 && currentIndex === 1) {
+          heroTouchHandled = true;
+          if (e.cancelable) e.preventDefault();
+          triggerScrollSwitch(0);
+          return;
         }
       }
     }, { passive: false });
+
+    // Fallback para rolagem nativa com inércia no mobile (caso o touchmove não cancele o scroll a tempo)
+    window.addEventListener('scroll', () => {
+      if (isScrollSwitching) return;
+      if (currentIndex === 0 && window.scrollY > 20 && window.scrollY < 220) {
+        triggerScrollSwitch(1);
+      }
+    }, { passive: true });
 
     // 4. Clique no botão de rolagem "Scroll para explorar"
     const heroScrollBtn = document.querySelector('.hero-scroll');
@@ -909,8 +939,16 @@ document.addEventListener('DOMContentLoaded', () => {
     btnNext?.addEventListener('mouseenter', () => { isUserInteracting = true; stopAutoplay(); });
     btnNext?.addEventListener('mouseleave', () => { isUserInteracting = false; startAutoplay(); });
 
-    track.addEventListener('touchstart', () => { isUserInteracting = true; stopAutoplay(); }, { passive: true });
+    let isTouchDragging = false;
+    track.addEventListener('touchstart', () => { 
+      isTouchDragging = true;
+      isUserInteracting = true; 
+      stopAutoplay(); 
+    }, { passive: true });
+
     track.addEventListener('touchend', () => { 
+      isTouchDragging = false;
+      normalizeScroll();
       setTimeout(() => { isUserInteracting = false; startAutoplay(); }, 1800); 
     });
 
@@ -955,7 +993,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Normalização no scroll nativo (touch / trackpad)
     track.addEventListener('scroll', () => {
-      if (!isAnimating && !isDown) {
+      if (!isAnimating && !isDown && !isTouchDragging) {
         normalizeScroll();
       }
     }, { passive: true });
@@ -994,20 +1032,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, { passive: true });
 
+    // 1. Rolagem com mouse / trackpad (Desktop e Mobile Emulators)
     window.addEventListener('wheel', (e) => {
-      // Aplica apenas em telas desktop / notebooks onde o scroll principal é via mouse/trackpad
-      if (window.innerWidth <= 768) return;
-
       const rect = track.getBoundingClientRect();
       const vh = window.innerHeight;
 
-      // "Quando o carrossel de depoimentos estiver a 33% inferior da tela":
       // Topo do carrossel entre 15% e 75% da altura da viewport e visível
       const inZone = rect.top <= vh * 0.75 && rect.top >= vh * 0.15 && rect.bottom >= vh * 0.30;
       if (!inZone) return;
 
       // Se o usuário estiver rolando para CIMA (deltaY < 0):
-      // Permite rolagem suave para cima sem travar a navegação
       if (e.deltaY < 0) {
         if (isWheelLocked) {
           isWheelLocked = false;
@@ -1019,7 +1053,6 @@ document.addEventListener('DOMContentLoaded', () => {
       // Se estiver rolando para BAIXO (deltaY > 0):
       if (Math.abs(e.deltaY) < 6) return;
 
-      // Consome a inércia/flick do gesto durante a animação do passo atual
       if (isWheelLocked) {
         e.preventDefault();
         return;
@@ -1047,8 +1080,59 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 2000);
         }, 500);
       }
-      // Quando scrollInterceptCount >= 2, o preventDefault NÃO é chamado,
-      // permitindo que o scroll do mouse role a página livremente para o próximo bloco!
+    }, { passive: false });
+
+    // 2. Rolagem com toque vertical no mobile (iPhone / Android)
+    let socialTouchStartY = 0;
+    let socialTouchStartX = 0;
+    let isTouchLocked = false;
+    let touchCooldownTimer = null;
+
+    window.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches[0]) {
+        socialTouchStartY = e.touches[0].clientY;
+        socialTouchStartX = e.touches[0].clientX;
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      const rect = track.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const inZone = rect.top <= vh * 0.70 && rect.top >= vh * 0.15 && rect.bottom >= vh * 0.30;
+      if (!inZone) return;
+
+      if (!e.touches || !e.touches[0]) return;
+      const currentY = e.touches[0].clientY;
+      const currentX = e.touches[0].clientX;
+      const diffY = socialTouchStartY - currentY;
+      const diffX = Math.abs(socialTouchStartX - currentX);
+
+      // Apenas se o gesto for vertical preponderante (se for horizontal, o usuário está arrastando os cards)
+      if (diffY > 30 && diffY > diffX * 1.5) {
+        if (isTouchLocked) {
+          if (e.cancelable) e.preventDefault();
+          return;
+        }
+
+        if (scrollInterceptCount < 2) {
+          if (e.cancelable) e.preventDefault();
+          isUserInteracting = true;
+          stopAutoplay();
+
+          smoothScrollBy(getCardStep(), 500);
+          scrollInterceptCount++;
+          isTouchLocked = true;
+
+          clearTimeout(touchCooldownTimer);
+          touchCooldownTimer = setTimeout(() => {
+            isTouchLocked = false;
+            setTimeout(() => {
+              isUserInteracting = false;
+              startAutoplay();
+            }, 2000);
+          }, 550);
+        }
+      }
     }, { passive: false });
 
     startAutoplay();
@@ -1083,6 +1167,29 @@ document.addEventListener('DOMContentLoaded', () => {
     let hasAnimated = false;
     let lockedScrollY = 0;
     let videoSafetyTimeout = null;
+
+    // Configuração e priming do elemento de vídeo para iOS Safari
+    if (riffleVideo) {
+      riffleVideo.muted = true;
+      riffleVideo.defaultMuted = true;
+      riffleVideo.playsInline = true;
+      riffleVideo.setAttribute('playsinline', '');
+      riffleVideo.setAttribute('webkit-playsinline', '');
+      riffleVideo.load();
+    }
+
+    const primeVideo = () => {
+      if (riffleVideo && !isPlaying) {
+        riffleVideo.muted = true;
+        riffleVideo.defaultMuted = true;
+        riffleVideo.play().then(() => {
+          riffleVideo.pause();
+          riffleVideo.currentTime = 0;
+        }).catch(() => {});
+      }
+    };
+    window.addEventListener('touchstart', primeVideo, { passive: true, once: true });
+    window.addEventListener('click', primeVideo, { passive: true, once: true });
 
     function resetRiffle() {
       stage.classList.remove('is-active', 'is-zoomed', 'show-title');
@@ -1139,11 +1246,20 @@ document.addEventListener('DOMContentLoaded', () => {
       // MODO 1: Se o vídeo estiver presente, executa o vídeo fullscreen
       if (riffleVideo) {
         riffleVideo.currentTime = 0;
+        riffleVideo.muted = true;
+        riffleVideo.defaultMuted = true;
+        riffleVideo.playsInline = true;
+        riffleVideo.setAttribute('playsinline', '');
+        riffleVideo.setAttribute('webkit-playsinline', '');
+
         const playPromise = riffleVideo.play();
         if (playPromise !== undefined) {
           playPromise.catch(() => {
             riffleVideo.muted = true;
-            riffleVideo.play().catch(() => {});
+            riffleVideo.play().catch(() => {
+              // Se o iOS Safari ainda assim bloquear por restrição de energia, encerra sem travar a tela
+              setTimeout(() => { closeRiffle(onComplete); }, 400);
+            });
           });
         }
 
@@ -1153,9 +1269,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // Trava de segurança: garante o fechamento após a duração do vídeo
-        const durMs = (riffleVideo.duration && !isNaN(riffleVideo.duration))
+        const durMs = (riffleVideo.duration && !isNaN(riffleVideo.duration) && riffleVideo.duration > 0)
           ? (riffleVideo.duration * 1000 + 400)
-          : 3400;
+          : 3600;
 
         videoSafetyTimeout = setTimeout(() => {
           if (isPlaying) {
@@ -1242,8 +1358,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: false, capture: true });
 
     // Função para verificar se a página atingiu a posição exata de disparo da animação:
-    // - Em telas grandes (Print 1): ativa com a Seção 01 no topo (com ~15% a 22% do final da hero visível no topo)
-    // - Em telas menores / 1280x720 (Print 2): ativa quando o título rolou para fora e o livro 3D está centralizado na tela
     function shouldTriggerRiffle() {
       const whySection = document.getElementById('livro');
       if (!whySection) return false;
@@ -1252,21 +1366,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const vh = window.innerHeight;
       const vw = window.innerWidth;
 
-      // Tela Grande (Desktop grande, >= 1400px de largura e >= 820px de altura)
-      const isLargeScreen = vw >= 1400 && vh >= 820;
-
-      if (isLargeScreen) {
-        // Posição Print 1: O topo da Seção 01 chegou ao início da tela (com ~15% a 22% do final da hero visível no topo)
-        return rect.top <= vh * 0.22 && rect.bottom >= vh * 0.40;
-      } else {
-        // Posição Print 2 (Telas menores / Laptops / 1280x720):
-        // O cabeçalho rolou para fora do topo e o livro 3D está centralizado/em destaque
+      if (vw >= 1200) {
+        // Desktop grande: topo da seção no terço superior
+        return rect.top <= vh * 0.25 && rect.bottom >= vh * 0.40;
+      } else if (vw >= 768) {
+        // Tablet / Laptops
         const bookEl = document.getElementById('book-still-interactive') || whySection;
-        const bookRect = bookEl.getBoundingClientRect();
-        const headingEl = whySection.querySelector('.section-heading');
-        const headingPast = headingEl ? headingEl.getBoundingClientRect().bottom <= 80 : rect.top <= -100;
-
-        return headingPast && bookRect.top <= vh * 0.22 && bookRect.bottom >= vh * 0.65;
+        const bRect = bookEl.getBoundingClientRect();
+        return bRect.top <= vh * 0.45 && bRect.bottom >= vh * 0.35;
+      } else {
+        // Mobile (iPhone / Android): quando o livro está visível na tela
+        const bookEl = document.getElementById('book-still-interactive') || whySection;
+        const bRect = bookEl.getBoundingClientRect();
+        return bRect.top <= vh * 0.70 && bRect.bottom >= vh * 0.20;
       }
     }
 
@@ -1308,21 +1420,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const currentY = e.touches[0].clientY;
       const diffY = touchStartY - currentY;
 
-      if (shouldTriggerRiffle() && diffY > 25) {
+      if (shouldTriggerRiffle() && diffY > 20) {
         e.preventDefault();
         e.stopPropagation();
         playRiffleAnimation();
       }
     }, { passive: false, capture: true });
 
-    // Teclas de navegação travadas durante a animação
-    window.addEventListener('keydown', (e) => {
-      if (isPlaying && ['ArrowDown', 'ArrowUp', 'Space', 'PageDown', 'PageUp', 'Home', 'End'].includes(e.code)) {
-        e.preventDefault();
-      }
-    }, { capture: true });
-
-    // Trava de segurança: se qualquer rolagem tentar mover a página de fundo durante a animação, mantém na posição exata
+    // Disparo em rolagem nativa / inércia de toque no mobile
+    let lastBookScrollY = window.scrollY;
     window.addEventListener('scroll', () => {
       if (isPlaying) {
         window.scrollTo(0, lockedScrollY);
@@ -1331,7 +1437,43 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.scrollY < 200) {
         hasAnimated = false;
       }
-    });
+
+      if (!hasAnimated && !isPlaying) {
+        const currentScroll = window.scrollY;
+        const isScrollingDown = currentScroll > lastBookScrollY;
+        lastBookScrollY = currentScroll;
+
+        if (isScrollingDown && shouldTriggerRiffle()) {
+          playRiffleAnimation();
+        }
+      } else {
+        lastBookScrollY = window.scrollY;
+      }
+    }, { passive: true });
+
+    // IntersectionObserver de apoio para mobile
+    if ('IntersectionObserver' in window) {
+      const bookTarget = document.getElementById('book-still-interactive');
+      if (bookTarget) {
+        const bookObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting && !hasAnimated && !isPlaying && window.scrollY > 150) {
+              playRiffleAnimation();
+            }
+          });
+        }, {
+          threshold: 0.35
+        });
+        bookObserver.observe(bookTarget);
+      }
+    }
+
+    // Teclas de navegação travadas durante a animação
+    window.addEventListener('keydown', (e) => {
+      if (isPlaying && ['ArrowDown', 'ArrowUp', 'Space', 'PageDown', 'PageUp', 'Home', 'End'].includes(e.code)) {
+        e.preventDefault();
+      }
+    }, { capture: true });
   }
 
   initBookFlipOnScroll();

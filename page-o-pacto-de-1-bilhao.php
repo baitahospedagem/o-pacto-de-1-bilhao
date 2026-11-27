@@ -1035,6 +1035,7 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
       class="riffle-video"
       src="<?php echo esc_url($template_uri . '/livro_animacao.mp4'); ?>"
       playsinline
+      webkit-playsinline
       muted
       preload="auto"
     ></video>
@@ -1071,7 +1072,7 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
     -->
   </div>
 
-  <script src="<?php echo esc_url($template_uri . '/script.js?v=6.7'); ?>"></script>
+  <script src="<?php echo esc_url($template_uri . '/script.js?v=7.0'); ?>"></script>
   <?php wp_footer(); ?>
 </body>
 </html>
