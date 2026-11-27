@@ -1366,21 +1366,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const vh = window.innerHeight || document.documentElement.clientHeight;
       const vw = window.innerWidth || document.documentElement.clientWidth;
 
-      // Em todas as telas (Desktop Full HD, MacBook, Laptops 1280x720, Tablets e Mobile):
-      // A animação do livro deve abrir SOMENTE quando a imagem do livro estiver centralizada na tela,
-      // e NUNCA antecipadamente enquanto o livro ainda estiver cortado no rodapé da página.
       const bookCenter = rect.top + (rect.height / 2);
       const screenCenter = vh / 2;
       const distanceFromCenter = Math.abs(bookCenter - screenCenter);
 
-      // Limite de tolerância de centralização adaptativa:
-      const maxDistance = vw >= 1024 ? Math.max(90, vh * 0.17) : Math.max(85, vh * 0.16);
+      // 1. Desktop e Tablet (vw >= 768px):
+      // Mantém exatamente a regra aprovada pelo usuário
+      if (vw >= 768) {
+        const maxDistance = vw >= 1024 ? Math.max(90, vh * 0.17) : Math.max(85, vh * 0.16);
+        const isCentered = distanceFromCenter <= maxDistance;
+        const isWellFramed = rect.top <= vh * 0.40 && rect.bottom >= vh * 0.60;
+        return isCentered && isWellFramed;
+      }
 
-      // O livro deve estar com o centro alinhado à viewport E com seu corpo plenamente visível (sem estar cortado no rodapé)
-      const isCentered = distanceFromCenter <= maxDistance;
-      const isWellFramed = rect.top <= vh * 0.40 && rect.bottom >= vh * 0.60;
+      // 2. Mobile (vw < 768px):
+      // Ajuste específico para mobile conforme prints do usuário:
+      // No Print 1 (título h2 da seção visível no topo, livro na metade inferior): NÃO dispara.
+      // No Print 2 (título h2 rolou para fora do topo, livro centralizado na tela com a lista '01' visível embaixo): DISPARA.
+      const whySection = document.getElementById('livro');
+      const headingH2 = whySection ? whySection.querySelector('h2') : null;
+      const headingPast = headingH2 ? headingH2.getBoundingClientRect().bottom <= 10 : true;
 
-      return isCentered && isWellFramed;
+      const maxDistanceMobile = Math.max(65, vh * 0.09);
+      const isCenteredMobile = distanceFromCenter <= maxDistanceMobile;
+      const isFramedMobile = rect.top <= vh * 0.26 && rect.bottom >= vh * 0.60;
+
+      return headingPast && isCenteredMobile && isFramedMobile;
     }
 
     function checkBookTrigger() {
