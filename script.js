@@ -1366,14 +1366,31 @@ document.addEventListener('DOMContentLoaded', () => {
       const vh = window.innerHeight || document.documentElement.clientHeight;
       const vw = window.innerWidth || document.documentElement.clientWidth;
 
-      if (vw >= 1024) {
-        // Desktop: seção 01 no terço superior
+      // 1. Desktop Grande (>= 1400px de largura e >= 820px de altura, ex: 1920x1080 / iMac):
+      // Mantém a regra original (ativa com a Seção 01 no topo/terço superior)
+      const isLargeDesktop = vw >= 1400 && vh >= 820;
+      if (isLargeDesktop) {
         const whySection = document.getElementById('livro');
         const sRect = whySection ? whySection.getBoundingClientRect() : rect;
         return sRect.top <= vh * 0.25 && sRect.bottom >= vh * 0.40;
       }
 
-      // No Mobile e Tablet (vw < 1024):
+      // 2. Desktop Médio / Laptops / 1280x720 (ex: Studio Display 1280x720, notebooks 1366x768):
+      // Abre EXATAMENTE na posição do print do usuário:
+      // O cabeçalho rolou para fora do topo (bottom <= 45px) e o livro está centralizado/em destaque
+      if (vw >= 1024) {
+        const whySection = document.getElementById('livro');
+        const headingEl = whySection ? whySection.querySelector('.section-heading') : null;
+        const headingPast = headingEl ? headingEl.getBoundingClientRect().bottom <= 45 : rect.top <= 210;
+
+        const bookCenter = rect.top + (rect.height / 2);
+        const screenCenter = vh / 2;
+        const distanceFromCenter = Math.abs(bookCenter - screenCenter);
+
+        return headingPast && distanceFromCenter <= Math.max(90, vh * 0.18) && rect.top <= vh * 0.35 && rect.bottom >= vh * 0.65;
+      }
+
+      // 3. No Mobile e Tablet (vw < 1024):
       // Deve abrir a animação do livro quando a imagem do livro estiver centralizada na tela
       const bookCenter = rect.top + (rect.height / 2);
       const screenCenter = vh / 2;
