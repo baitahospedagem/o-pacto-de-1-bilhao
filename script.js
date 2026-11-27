@@ -1366,39 +1366,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const vh = window.innerHeight || document.documentElement.clientHeight;
       const vw = window.innerWidth || document.documentElement.clientWidth;
 
-      // 1. Desktop Grande (>= 1400px de largura e >= 820px de altura, ex: 1920x1080 / iMac):
-      // Mantém a regra original (ativa com a Seção 01 no topo/terço superior)
-      const isLargeDesktop = vw >= 1400 && vh >= 820;
-      if (isLargeDesktop) {
-        const whySection = document.getElementById('livro');
-        const sRect = whySection ? whySection.getBoundingClientRect() : rect;
-        return sRect.top <= vh * 0.25 && sRect.bottom >= vh * 0.40;
-      }
-
-      // 2. Desktop Médio / Laptops / 1280x720 (ex: Studio Display 1280x720, notebooks 1366x768):
-      // Abre EXATAMENTE na posição do print do usuário:
-      // O cabeçalho rolou para fora do topo (bottom <= 45px) e o livro está centralizado/em destaque
-      if (vw >= 1024) {
-        const whySection = document.getElementById('livro');
-        const headingEl = whySection ? whySection.querySelector('.section-heading') : null;
-        const headingPast = headingEl ? headingEl.getBoundingClientRect().bottom <= 45 : rect.top <= 210;
-
-        const bookCenter = rect.top + (rect.height / 2);
-        const screenCenter = vh / 2;
-        const distanceFromCenter = Math.abs(bookCenter - screenCenter);
-
-        return headingPast && distanceFromCenter <= Math.max(90, vh * 0.18) && rect.top <= vh * 0.35 && rect.bottom >= vh * 0.65;
-      }
-
-      // 3. No Mobile e Tablet (vw < 1024):
-      // Deve abrir a animação do livro quando a imagem do livro estiver centralizada na tela
+      // Em todas as telas (Desktop Full HD, MacBook, Laptops 1280x720, Tablets e Mobile):
+      // A animação do livro deve abrir SOMENTE quando a imagem do livro estiver centralizada na tela,
+      // e NUNCA antecipadamente enquanto o livro ainda estiver cortado no rodapé da página.
       const bookCenter = rect.top + (rect.height / 2);
       const screenCenter = vh / 2;
       const distanceFromCenter = Math.abs(bookCenter - screenCenter);
 
-      // Centralizado: o centro da imagem do livro está a menos de 85px do centro vertical exato da tela
-      // e o livro está bem enquadrado na tela
-      return distanceFromCenter <= Math.max(85, vh * 0.16) && rect.top < vh * 0.45 && rect.bottom > vh * 0.55;
+      // Limite de tolerância de centralização adaptativa:
+      const maxDistance = vw >= 1024 ? Math.max(90, vh * 0.17) : Math.max(85, vh * 0.16);
+
+      // O livro deve estar com o centro alinhado à viewport E com seu corpo plenamente visível (sem estar cortado no rodapé)
+      const isCentered = distanceFromCenter <= maxDistance;
+      const isWellFramed = rect.top <= vh * 0.40 && rect.bottom >= vh * 0.60;
+
+      return isCentered && isWellFramed;
     }
 
     function checkBookTrigger() {

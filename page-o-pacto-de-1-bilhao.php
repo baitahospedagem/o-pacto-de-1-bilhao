@@ -1072,7 +1072,7 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
     -->
   </div>
 
-  <script src="<?php echo esc_url($template_uri . '/script.js?v=7.2'); ?>"></script>
+  <script src="<?php echo esc_url($template_uri . '/script.js?v=7.3'); ?>"></script>
   <?php wp_footer(); ?>
 </body>
 </html>
