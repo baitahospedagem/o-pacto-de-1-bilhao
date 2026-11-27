@@ -37,28 +37,18 @@ Esta landing page foi desenvolvida sob uma **direção de arte editorial premium
 
 ### 3. Como Publicar no WordPress com WooCommerce
 
-#### Opção A: Utilizando como Modelo de Página (Recomendado)
-1. Conecte-se ao seu servidor WordPress via FTP ou Gerenciador de Arquivos do cPanel/Hospedagem.
-2. Acesse a pasta do seu tema filho (child theme) ou tema ativo:
-   `wp-content/themes/seu-tema-filho/`
-3. Envie os seguintes arquivos para a pasta do tema:
-   - `page-o-pacto-de-1-bilhao.php`
-   - `style.css` (ou incorpore os estilos ao CSS do tema)
-   - `script.js`
-   - `hero_autor_livro.png`
-   - `editorial_autor_livro.png`
-4. No painel do WordPress, vá em **Páginas > Adicionar Nova**.
-5. No painel lateral direito, em **Modelo de Página (Page Template)**, selecione:
-   **`Landing Page - O Pacto de 1 Bilhão`**.
-6. Defina o slug/URL da página (ex: `o-pacto-de-1-bilhao` ou `livro`) e clique em **Publicar**.
+#### Opção A: Instalação via ZIP no Painel WordPress (Mais Fácil e Recomendada)
+1. Baixe os arquivos **`o-pacto-de-1-bilhao.zip`** (Tema Pai) e **`o-pacto-de-1-bilhao-child.zip`** (Tema Filho) deste repositório.
+2. No seu painel WordPress, acesse:
+   **Aparência > Temas > Adicionar Novo > Enviar Tema**.
+3. Envie primeiro o arquivo **`o-pacto-de-1-bilhao.zip`** e instale.
+4. Em seguida, envie **`o-pacto-de-1-bilhao-child.zip`** e clique em **Ativar**.
+5. Pronto! O tema e a loja estarão 100% integrados e prontos para uso.
 
-#### Opção B: Configuração dos IDs dos Produtos no WooCommerce
-No arquivo `page-o-pacto-de-1-bilhao.php`, localize as linhas:
-```php
-$id_produto_fisico  = apply_filters('pacto_produto_fisico_id', 101);
-$id_produto_digital = apply_filters('pacto_produto_digital_id', 102);
-```
-Substitua `101` pelo ID real do produto físico cadastrado no seu WooCommerce e `102` pelo ID real da edição digital.
+#### Opção B: Configuração pelo Personalizador do WordPress (Sem tocar em código)
+1. Acesse **Aparência > Personalizar > O Pacto de 1 Bilhão — Loja & Produtos**.
+2. Defina os IDs do Produto Físico e Produto Digital cadastrados no seu WooCommerce.
+3. Marque a opção **Redirecionar direto para o Checkout** para maximizar a conversão de vendas.
 
 **Como descobrir o ID do produto no WooCommerce:**
 1. No painel WordPress, acesse **Produtos > Todos os produtos**.

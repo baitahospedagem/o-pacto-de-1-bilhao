@@ -1,3 +1,17 @@
+/*
+Theme Name: O Pacto de 1 Bilhão
+Theme URI: https://github.com/baitahospedagem/o-pacto-de-1-bilhao
+Author: Salih Abdulatif
+Author URI: https://github.com/baitahospedagem/o-pacto-de-1-bilhao
+Description: Tema premium editorial com suporte completo a WooCommerce para o livro oficial O Pacto de 1 Bilhão.
+Version: 2.1.0
+Requires at least: 6.0
+Tested up to: 6.7
+Requires PHP: 7.4
+Text Domain: o-pacto-de-1-bilhao
+Tags: e-commerce, one-column, custom-colors, custom-header, custom-logo, featured-images, full-width-template, theme-options, translation-ready
+*/
+
 /* ==========================================================================
    O PACTO DE 1 BILHÃO — LANDING PAGE EDITORIAL DE ALTA CONVERSÃO
    Estilo Oficial baseado no Design System de "pactobilhao-export"
@@ -3036,3 +3050,150 @@ h1 em, h2 em { font-weight: 400; font-style: italic; color: var(--gold-soft); }
     margin-top: 6px;
   }
 }
+
+/* ==========================================================================
+   ESTILOS EDITORIAIS WOOCOMMERCE — CHECKOUT, CARRINHO E PÁGINAS DA LOJA
+   Integração com a paleta O Pacto de 1 Bilhão (Navy & Dourado)
+   ========================================================================== */
+.pacto-woo-container {
+  min-height: 70vh;
+  padding: 80px 24px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.pacto-woo-container h1, 
+.pacto-woo-container h2, 
+.pacto-woo-container h3 {
+  font-family: var(--serif);
+  color: var(--navy);
+  margin-bottom: 24px;
+}
+
+/* Notificações e Alertas WooCommerce */
+.woocommerce-message, 
+.woocommerce-info, 
+.woocommerce-error {
+  background: var(--white) !important;
+  border-left: 4px solid var(--gold) !important;
+  border-radius: var(--radius);
+  padding: 16px 24px !important;
+  box-shadow: 0 4px 20px rgba(10, 29, 47, 0.08);
+  margin-bottom: 30px !important;
+  color: var(--navy-2) !important;
+}
+
+.woocommerce-error {
+  border-left-color: #ef4444 !important;
+}
+
+/* Campos de Formulário no Checkout */
+.woocommerce form .form-row input.input-text,
+.woocommerce form .form-row textarea,
+.woocommerce form .form-row select {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--navy);
+  font-family: var(--sans);
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.woocommerce form .form-row input.input-text:focus,
+.woocommerce form .form-row textarea:focus,
+.woocommerce form .form-row select:focus {
+  border-color: var(--gold);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(200, 166, 106, 0.25);
+}
+
+/* Botões Oficiais WooCommerce */
+.woocommerce #respond input#submit.alt,
+.woocommerce a.button.alt,
+.woocommerce button.button.alt,
+.woocommerce input.button.alt,
+.woocommerce #place_order {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  font-family: var(--sans) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  padding: 16px 28px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
+  transition: background 0.2s ease, transform 0.2s ease !important;
+  cursor: pointer;
+}
+
+.woocommerce #respond input#submit.alt:hover,
+.woocommerce a.button.alt:hover,
+.woocommerce button.button.alt:hover,
+.woocommerce input.button.alt:hover,
+.woocommerce #place_order:hover {
+  background: #059669 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45) !important;
+}
+
+/* Tabela de Revisão do Pedido */
+.woocommerce-checkout-review-order-table,
+.woocommerce table.shop_table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(10, 29, 47, 0.05);
+}
+
+.woocommerce table.shop_table th {
+  background: var(--navy);
+  color: #fff;
+  font-family: var(--sans);
+  font-weight: 600;
+  padding: 14px 20px;
+}
+
+.woocommerce table.shop_table td {
+  padding: 16px 20px;
+  border-top: 1px solid var(--line);
+  color: var(--navy-2);
+}
+
+/* Mini Carrinho / Header Cart Badge */
+.pacto-header-cart {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(221, 201, 158, 0.4);
+  color: var(--gold-soft);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.pacto-header-cart:hover {
+  background: rgba(221, 201, 158, 0.12);
+  border-color: var(--gold);
+  color: #fff;
+}
+
+.pacto-cart-count {
+  background: #10b981;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
