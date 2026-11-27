@@ -61,6 +61,14 @@ $asset_logo = file_exists(get_stylesheet_directory() . '/logo_o_pacto_de_1_bilha
   <title><?php wp_title('|', true, 'right'); ?> O Pacto de 1 Bilhão — Por Salih Abdulatif</title>
   
   <meta name="description" content="O Pacto de 1 Bilhão — uma leitura sobre visão, poder e transformação, disponível em edição física e digital.">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="<?php echo esc_url($template_uri . '/favicon-32x32.png'); ?>">
+  <link rel="icon" type="image/png" sizes="16x16" href="<?php echo esc_url($template_uri . '/favicon-16x16.png'); ?>">
+  <link rel="apple-touch-icon" sizes="180x180" href="<?php echo esc_url($template_uri . '/apple-touch-icon.png'); ?>">
+  <link rel="icon" href="<?php echo esc_url($template_uri . '/favicon.ico'); ?>">
+  <link rel="shortcut icon" href="<?php echo esc_url($template_uri . '/favicon.ico'); ?>">
+
+  <!-- Open Graph -->
   <meta property="og:type" content="book">
   <meta property="og:title" content="O Pacto de 1 Bilhão — Por Salih Abdulatif">
   <meta property="og:description" content="Uma leitura para quem quer ampliar a própria visão sobre dinheiro, poder e as grandes viradas da vida.">
