@@ -1357,34 +1357,42 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
     }, { passive: false, capture: true });
 
-    // Função para verificar se a página atingiu a posição exata de disparo da animação:
-    function shouldTriggerRiffle() {
-      const whySection = document.getElementById('livro');
-      if (!whySection) return false;
+    // Função para verificar se o livro atingiu a posição de disparo da animação:
+    function isBookCenteredOnScreen() {
+      const bookImg = document.getElementById('book-still-img') || document.getElementById('book-still-interactive');
+      if (!bookImg) return false;
 
-      const rect = whySection.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const vw = window.innerWidth;
+      const rect = bookImg.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const vw = window.innerWidth || document.documentElement.clientWidth;
 
-      if (vw >= 1200) {
-        // Desktop grande: topo da seção no terço superior
-        return rect.top <= vh * 0.25 && rect.bottom >= vh * 0.40;
-      } else if (vw >= 768) {
-        // Tablet / Laptops
-        const bookEl = document.getElementById('book-still-interactive') || whySection;
-        const bRect = bookEl.getBoundingClientRect();
-        return bRect.top <= vh * 0.45 && bRect.bottom >= vh * 0.35;
-      } else {
-        // Mobile (iPhone / Android): quando o livro está visível na tela
-        const bookEl = document.getElementById('book-still-interactive') || whySection;
-        const bRect = bookEl.getBoundingClientRect();
-        return bRect.top <= vh * 0.70 && bRect.bottom >= vh * 0.20;
+      if (vw >= 1024) {
+        // Desktop: seção 01 no terço superior
+        const whySection = document.getElementById('livro');
+        const sRect = whySection ? whySection.getBoundingClientRect() : rect;
+        return sRect.top <= vh * 0.25 && sRect.bottom >= vh * 0.40;
+      }
+
+      // No Mobile e Tablet (vw < 1024):
+      // Deve abrir a animação do livro quando a imagem do livro estiver centralizada na tela
+      const bookCenter = rect.top + (rect.height / 2);
+      const screenCenter = vh / 2;
+      const distanceFromCenter = Math.abs(bookCenter - screenCenter);
+
+      // Centralizado: o centro da imagem do livro está a menos de 85px do centro vertical exato da tela
+      // e o livro está bem enquadrado na tela
+      return distanceFromCenter <= Math.max(85, vh * 0.16) && rect.top < vh * 0.45 && rect.bottom > vh * 0.55;
+    }
+
+    function checkBookTrigger() {
+      if (hasAnimated || isPlaying) return;
+      if (isBookCenteredOnScreen()) {
+        playRiffleAnimation();
       }
     }
 
-    // Interceptação de Scroll: ativa com apenas um scroll quando o bloco da Seção 01 está enquadrado na posição exata
+    // Interceptação de Scroll via mouse/trackpad:
     window.addEventListener('wheel', (e) => {
-      // Quando a animação estiver ocorrendo, a página de fundo NUNCA deve rolar
       if (isPlaying) {
         e.preventDefault();
         e.stopPropagation();
@@ -1393,42 +1401,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (hasAnimated) return;
 
-      if (shouldTriggerRiffle() && e.deltaY > 0) {
+      if (isBookCenteredOnScreen() && e.deltaY > 0) {
         e.preventDefault();
         e.stopPropagation();
         playRiffleAnimation();
       }
     }, { passive: false, capture: true });
 
-    // Touch gesture no mobile (arrasto para cima = scroll para baixo)
-    let touchStartY = 0;
-    window.addEventListener('touchstart', (e) => {
-      if (e.touches && e.touches[0]) {
-        touchStartY = e.touches[0].clientY;
-      }
+    // Touch gesture no mobile (arrasto com o dedo)
+    window.addEventListener('touchstart', () => {
+      checkBookTrigger();
     }, { passive: true });
 
-    window.addEventListener('touchmove', (e) => {
-      // Quando a animação estiver ocorrendo, a página de fundo NUNCA deve rolar
-      if (isPlaying) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-      if (hasAnimated || !e.touches || !e.touches[0]) return;
+    window.addEventListener('touchmove', () => {
+      checkBookTrigger();
+    }, { passive: true });
 
-      const currentY = e.touches[0].clientY;
-      const diffY = touchStartY - currentY;
+    window.addEventListener('touchend', () => {
+      checkBookTrigger();
+    }, { passive: true });
 
-      if (shouldTriggerRiffle() && diffY > 20) {
-        e.preventDefault();
-        e.stopPropagation();
-        playRiffleAnimation();
-      }
-    }, { passive: false, capture: true });
-
-    // Disparo em rolagem nativa / inércia de toque no mobile
-    let lastBookScrollY = window.scrollY;
+    // Disparo em rolagem nativa / inércia de toque no mobile e tablet
     window.addEventListener('scroll', () => {
       if (isPlaying) {
         window.scrollTo(0, lockedScrollY);
@@ -1438,31 +1431,17 @@ document.addEventListener('DOMContentLoaded', () => {
         hasAnimated = false;
       }
 
-      if (!hasAnimated && !isPlaying) {
-        const currentScroll = window.scrollY;
-        const isScrollingDown = currentScroll > lastBookScrollY;
-        lastBookScrollY = currentScroll;
-
-        if (isScrollingDown && shouldTriggerRiffle()) {
-          playRiffleAnimation();
-        }
-      } else {
-        lastBookScrollY = window.scrollY;
-      }
+      checkBookTrigger();
     }, { passive: true });
 
-    // IntersectionObserver de apoio para mobile
+    // IntersectionObserver de apoio com thresholds múltiplos
     if ('IntersectionObserver' in window) {
-      const bookTarget = document.getElementById('book-still-interactive');
+      const bookTarget = document.getElementById('book-still-img') || document.getElementById('book-still-interactive');
       if (bookTarget) {
-        const bookObserver = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting && !hasAnimated && !isPlaying && window.scrollY > 150) {
-              playRiffleAnimation();
-            }
-          });
+        const bookObserver = new IntersectionObserver(() => {
+          checkBookTrigger();
         }, {
-          threshold: 0.35
+          threshold: [0.4, 0.6, 0.8, 1.0]
         });
         bookObserver.observe(bookTarget);
       }
